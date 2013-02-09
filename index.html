@@ -21,7 +21,7 @@
 <img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'play-hover.png');" onmouseOut="changeButton(event, 'play-idle.png');" onmousedown="changeButton(event, 'play-grab.png')" onmouseup="changeButton(event, 'play-hover.png');"">
 <img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
 
-<div id="puzzlesDiv" style="position:absolute;top:720px;left:0px;white-space:nowrap;" onclick="changePic(event);">
+<div id="puzzlesDiv" style="position:absolute;top:720px;left:0px;white-space:nowrap;clip:rect(0px, 1280px, 96px, 0px);" onmousedown="startDivScroll(event);" onmousemove="divScroll(event);" onmouseup="stopDivScroll(event);" onmouseout="stopDivScroll(event);">
 	<img src="puzzles/image1.jpg"  style="width: 128px; height: 96px" align="left">
 	<img src="puzzles/image2.jpg"  style="width: 128px; height: 96px" align="left">
 	<img src="puzzles/image3.jpg"  style="width: 128px; height: 96px" align="left">
@@ -32,11 +32,15 @@
 	<img src="puzzles/image8.jpg"  style="width: 128px; height: 96px" align="left">
 	<img src="puzzles/image9.jpg"  style="width: 128px; height: 96px" align="left">
 	<img src="puzzles/image10.jpg" style="width: 128px; height: 96px" align="left">
+	<img src="puzzles/image11.jpg" style="width: 128px; height: 96px" align="left">
 </div>
 
 <!--
-fix for opera mobile and android?
-reative positioning
+problems:
+	1. iPhone div clipping doesn't apply to scroll (can still scroll to area of clipped images)
+	2. iPhone touchEnd changePic doesn't work
+	3. targets are children - fast motions out of images can cause onmouseout prematurely
+	4. iPhone: images are cut off on the bottom
 -->
 
 <script type="text/javascript">
@@ -305,10 +309,38 @@ reative positioning
 		}
 	}
 
-	function changePic(event)
+	var scrollActive = false;
+	var scrollStartX = 0;
+	var scrollDeltaStart = 0;
+	var puzzlesDiv = document.getElementById("puzzlesDiv");
+
+	function startDivScroll(event)
 	{
-		image.src = event.target.src;
-		reset();
+		scrollStartX = event.clientX;
+		scrollDeltaStart = puzzlesDiv.offsetLeft;
+		scrollActive = true;
+		event.preventDefault();
+	}
+	function stopDivScroll(event)
+	{
+		if (scrollActive && Math.abs(event.clientX - scrollStartX) < 5)
+		{
+			image.src = event.target.src;
+			reset();
+		}
+		scrollActive = false;
+	}
+
+	function divScroll(event)
+	{
+		if (scrollActive)
+		{
+			var scrollDelta = scrollDeltaStart + event.clientX - scrollStartX;
+			scrollDelta = (scrollDelta < -128) ? (-128) : (scrollDelta > 0 ? 0 : scrollDelta);
+			puzzlesDiv.style.left = scrollDelta + "px";
+			puzzlesDiv.style.clip = "rect(auto, " + (1280 - scrollDelta) + "px, auto, " + (0 -scrollDelta) + "px)";
+			event.preventDefault();
+		}
 	}
 
 	// support for iPhone
@@ -332,6 +364,26 @@ reative positioning
 	function touchEnd(e)
 	{
 		mouseRelease(e);
+	}
+
+    puzzlesDiv.addEventListener("touchstart", scrollTouchStart, false);
+    puzzlesDiv.addEventListener("touchmove", scrollTouchMove, true);
+    puzzlesDiv.addEventListener("touchend", scrollTouchEnd, false);
+
+	function scrollTouchStart(e)
+	{
+		e.clientX = e.targetTouches[0].pageX;
+		startDivScroll(e);
+	}
+	function scrollTouchMove(e)
+	{
+		e.clientX = e.targetTouches[0].pageX;
+		divScroll(e)
+	}
+	function scrollTouchEnd(e)
+	{
+		e.clientX = e.targetTouches[0].pageX;
+		divScroll(e)
 	}
 
 	if (window.navigator.standalone)
