@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html manifest="./puzzled.appcache">
+<head>
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=0.375, maximum-scale=0.375"/>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-icon" href="assets/puzzled-icon-cut.png"/>
+    <link rel="apple-touch-startup-image" href="splash-screen.png" />
+	<title>Puzzled</title>
+	
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	<!-- try to make IE9 not run in compatibility mode -->
+</head>
+<body>
+<img src="assets/puzzled-bg.png" style="position: absolute; top: 0px; left: 0px;">
+<canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
+<img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
+<img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" onclick="startGame(4, 4, 'hard-text.png');" onmouseover="changeButton(event, 'hard-hover.png');" onmouseOut="changeButton(event, 'hard-idle.png');" onmousedown="changeButton(event, 'hard-grab.png')" onmouseup="changeButton(event, 'hard-hover.png');"">
+<img id="insane-button" src="assets/insane-idle.png" style="position: absolute; top: 556px; left: 115px;" onclick="startGame(6, 6, 'insane-text.png');"  onmouseover="changeButton(event, 'insane-hover.png');" onmouseOut="changeButton(event, 'insane-idle.png');" onmousedown="changeButton(event, 'insane-grab.png')" onmouseup="changeButton(event, 'insane-hover.png');"">
+<img id="reset-button" src="assets/reset-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'reset-hover.png');" onmouseOut="changeButton(event, 'reset-idle.png');" onmousedown="changeButton(event, 'reset-grab.png')" onmouseup="changeButton(event, 'reset-hover.png');"">
+<img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'play-hover.png');" onmouseOut="changeButton(event, 'play-idle.png');" onmousedown="changeButton(event, 'play-grab.png')" onmouseup="changeButton(event, 'play-hover.png');"">
+<img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
+
+<!--
+fix for opera mobile and android?
+reative positioning
+-->
+
+<script type="text/javascript">
+	// supporting Opera, Firefox, Chrome, Safari, IE9 without compatibility mode, and Safari on iPhone
+	if (navigator.appName == "Microsoft Internet Explorer" && navigator.appVersion.indexOf("5.0") != 0)
+	{
+		alert("You are using an unsupported version of Internet Explorer, or viewing the site using compatibility mode.");
+	}
+
+	function GetImagePath()
+	{
+		// parse query string for "image" parameter, or return default path
+		var name = "image"
+		var regexS = "[\\?&]" + name + "=([^&#]*)";
+		var regex = new RegExp(regexS);
+		var results = regex.exec(window.location.search);
+		if(results == null)
+		{
+			return "puzzles/image2.jpg";
+		}
+		return decodeURIComponent(results[1].replace(/\+/g, " "));
+	}
+
+	var image = new Image();
+	var timer = null;
+	image.onload = function()
+	{
+		initPuzzlePieces();
+		if (timer)
+		{
+			window.clearInterval(timer);
+		}
+		timer = setInterval("redraw()", 1000/60);
+	}
+	image.src = GetImagePath();
+
+	var preloaded_objects = new Array();
+	function preload_img(src)
+	{
+		preloaded_objects[preloaded_objects.length] = new Image();
+		preloaded_objects[preloaded_objects.length-1].src = src;
+	}
+	preload_img("assets/easy-idle.png");
+	preload_img("assets/easy-hover.png");
+	preload_img("assets/easy-grab.png");
+	preload_img("assets/hard-idle.png");
+	preload_img("assets/hard-hover.png");
+	preload_img("assets/hard-grab.png");
+	preload_img("assets/insane-idle.png");
+	preload_img("assets/insane-hover.png");
+	preload_img("assets/insane-grab.png");
+	preload_img("assets/reset-idle.png");
+	preload_img("assets/reset-hover.png");
+	preload_img("assets/reset-grab.png");
+	preload_img("assets/play-idle.png");
+	preload_img("assets/play-hover.png");
+	preload_img("assets/play-grab.png");
+	preload_img("assets/easy-text.png");
+	preload_img("assets/hard-text.png");
+	preload_img("assets/insane-text.png");
+	
+	function PuzzlePiece()
+	{
+		this.origX = 0;
+		this.origY = 0;
+		this.posX = 0;
+		this.posY = 0;
+		this.animateFromX = 0;
+		this.animateFromY = 0;
+		this.animationFrame = 0;
+	}
+
+	var num_rows = 1;
+	var num_cols = 1;
+	var mouseX = 0;
+	var mouseY = 0;
+	var draw_border = false;
+	var puzzle_pieces;
+	var clicked_piece = -1;
+	var clicked = false;
+
+	function changeButton(e, new_src)
+	{
+		e.target.src = "assets/" + new_src;
+	}
+
+	function mouseMove(e)
+	{
+		var canvas = document.getElementById('PuzzleCanvas');
+		if (!e) var e = window.event;
+		e.preventDefault();
+		mouseX = e.clientX - canvas.offsetLeft;
+		mouseY = e.clientY - canvas.offsetTop;
+	}
+
+	function initPuzzlePieces()
+	{
+		puzzle_pieces = new Array;
+		for (var i = 0; i < num_cols; i++)
+		{
+			for (var j = 0; j < num_rows; j++)
+			{
+				var x = Math.floor(640 / num_cols * i);
+				var y = Math.floor(480 / num_rows * j);
+				puzzle_pieces[i * num_rows + j] = new PuzzlePiece();
+				puzzle_pieces[i * num_rows + j].origX = x;
+				puzzle_pieces[i * num_rows + j].origY = y;
+				puzzle_pieces[i * num_rows + j].posX = x;
+				puzzle_pieces[i * num_rows + j].posY = y;
+				puzzle_pieces[i * num_rows + j].animateFromX = x;
+				puzzle_pieces[i * num_rows + j].animateFromY = y;
+				puzzle_pieces[i * num_rows + j].animationFrame = 0;
+			}
+		}
+	}
+
+	function shuffle()
+	{
+		for (var i = 0; i < 1000; i++)
+		{
+			var first_piece = puzzle_pieces[Math.floor(Math.random()*num_cols*num_rows)];
+			var second_piece = puzzle_pieces[Math.floor(Math.random()*num_cols*num_rows)];
+			var tempX = first_piece.posX;
+			var tempY = first_piece.posY;
+			first_piece.posX = second_piece.posX;
+			first_piece.posY = second_piece.posY;
+			second_piece.posX = tempX;
+			second_piece.posY = tempY;
+		}
+
+		for (var i = 0; i < num_cols*num_rows; i++)
+		{
+			puzzle_pieces[i].animationFrame = 10;
+		}
+	}
+
+	function hoveredPiece()
+	{
+		for (var i = 0; i < num_cols*num_rows; i++)
+		{
+			if (mouseX > puzzle_pieces[i].posX && mouseX < puzzle_pieces[i].posX + 640/num_cols && mouseY > puzzle_pieces[i].posY && mouseY < puzzle_pieces[i].posY + 480/num_rows)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	function mouseClick(e)
+	{
+		e.preventDefault();
+		clicked_piece = hoveredPiece();
+		clicked = true;
+	}
+	function mouseRelease(e)
+	{
+		e.preventDefault();
+		clicked_piece = -1;
+		clicked = false;
+	}
+
+	function reset()
+	{
+		document.getElementById('easy-button').style.visibility = "";
+		document.getElementById('hard-button').style.visibility = "";
+		document.getElementById('insane-button').style.visibility = "";
+		document.getElementById('reset-button').style.visibility = "hidden";
+		document.getElementById('play-button').style.visibility = "hidden";
+		document.getElementById('level-text').style.visibility = "hidden";
+		draw_border = false;
+		initPuzzlePieces();
+	}
+
+	function startGame(c, r, png)
+	{
+		document.getElementById('easy-button').style.visibility = "hidden";
+		document.getElementById('hard-button').style.visibility = "hidden";
+		document.getElementById('insane-button').style.visibility = "hidden";
+		document.getElementById('reset-button').style.visibility = "";
+		document.getElementById('level-text').style.visibility = "";
+
+		document.getElementById('level-text').src = "assets/" + png;
+	
+		num_cols = c;
+		num_rows = r;
+		draw_border = true;
+		initPuzzlePieces();
+		shuffle();
+	}
+
+	function mathMap(value, inputMin, inputMax, outputMin, outputMax)
+	{
+		return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
+	}
+
+	function checkWin()
+	{
+		var flag = true;
+		for (var i = 0; i < num_cols*num_rows; i++)
+		{
+			if (puzzle_pieces[i].animationFrame != 0 || puzzle_pieces[i].posX != puzzle_pieces[i].origX || puzzle_pieces[i].posY != puzzle_pieces[i].origY)
+			{
+				flag = false;
+			}
+		}
+		if (flag)
+		{
+			draw_border = false;
+			document.getElementById('reset-button').style.visibility = "hidden";
+			document.getElementById('play-button').style.visibility = "";
+		}
+	}
+
+	function drawPiece(ctx, piece, is_clicked)
+	{
+		var drawX = mathMap(piece.animationFrame, 0, 10, piece.posX, piece.animateFromX);
+		var drawY = mathMap(piece.animationFrame, 0, 10, piece.posY, piece.animateFromY);
+		var drawW = Math.ceil(640 / num_cols);
+		var drawH = Math.ceil(480 / num_rows);
+		ctx.drawImage(image, piece.origX, piece.origY, drawW, drawH, drawX, drawY, drawW, drawH);
+		if (draw_border)
+		{
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = is_clicked ? "#FECC00" : "black";
+			ctx.strokeRect(drawX, drawY, drawW, drawH);
+		}
+	}
+
+	function redraw()
+	{
+		var canvas = document.getElementById('PuzzleCanvas');
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, 640, 480);
+		for (var i = 0; i < num_cols*num_rows; i++)
+		{
+			if (puzzle_pieces[i].animationFrame > 0)
+			{
+				puzzle_pieces[i].animationFrame--;
+			}
+			drawPiece(ctx, puzzle_pieces[i], false);
+		}
+		var hovered_piece = hoveredPiece();
+		if (clicked_piece != -1)
+		{
+			drawPiece(ctx, puzzle_pieces[clicked_piece], true);
+		}
+		if (draw_border && clicked && clicked_piece != -1 && hovered_piece != -1 && hovered_piece != clicked_piece)
+		{
+			puzzle_pieces[hovered_piece].animateFromX = puzzle_pieces[hovered_piece].posX;
+			puzzle_pieces[hovered_piece].animateFromY = puzzle_pieces[hovered_piece].posY;
+			puzzle_pieces[hovered_piece].animationFrame = 10;
+			puzzle_pieces[clicked_piece].animateFromX = puzzle_pieces[clicked_piece].posX;
+			puzzle_pieces[clicked_piece].animateFromY = puzzle_pieces[clicked_piece].posY;
+			puzzle_pieces[clicked_piece].animationFrame = 10;
+
+			var tempX = puzzle_pieces[clicked_piece].posX;
+			var tempY = puzzle_pieces[clicked_piece].posY;
+			puzzle_pieces[clicked_piece].posX = puzzle_pieces[hovered_piece].posX;
+			puzzle_pieces[clicked_piece].posY = puzzle_pieces[hovered_piece].posY;
+			puzzle_pieces[hovered_piece].posX = tempX;
+			puzzle_pieces[hovered_piece].posY = tempY;
+		}
+		if (draw_border)
+		{
+			checkWin();
+		}
+	}
+
+	function changePic(event)
+	{
+		image.src = event.target.src;
+		reset();
+	}
+
+	// support for iPhone
+	var can = document.getElementById('PuzzleCanvas');
+    can.addEventListener("touchstart", touchStart, false);
+    can.addEventListener("touchmove", touchMove, true);
+    can.addEventListener("touchend", touchEnd, false);
+
+	function touchStart(e)
+	{
+		touchMove(e);
+		mouseClick(e);
+	}
+	function touchMove(e)
+	{
+		if (!e) var e = event;
+		e.preventDefault();
+		mouseX = e.targetTouches[0].pageX - can.offsetLeft;
+		mouseY = e.targetTouches[0].pageY - can.offsetTop;
+	}
+	function touchEnd(e)
+	{
+		mouseRelease(e);
+	}
+
+	if (window.navigator.standalone)
+	{
+		document.ontouchmove = function(e) {e.preventDefault()}; // disable scroll in app mode
+	}
+ 
+</script>
+</body>
+</html>
