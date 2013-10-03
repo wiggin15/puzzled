@@ -12,20 +12,20 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	<!-- try to make IE9 not run in compatibility mode -->
 </head>
 <body>
-<img src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
-<canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
-<img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
-<img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" onclick="startGame(4, 4, 'hard-text.png');" onmouseover="changeButton(event, 'hard-hover.png');" onmouseOut="changeButton(event, 'hard-idle.png');" onmousedown="changeButton(event, 'hard-grab.png')" onmouseup="changeButton(event, 'hard-hover.png');"">
-<img id="insane-button" src="assets/insane-idle.png" style="position: absolute; top: 556px; left: 115px;" onclick="startGame(6, 6, 'insane-text.png');"  onmouseover="changeButton(event, 'insane-hover.png');" onmouseOut="changeButton(event, 'insane-idle.png');" onmousedown="changeButton(event, 'insane-grab.png')" onmouseup="changeButton(event, 'insane-hover.png');"">
-<img id="reset-button" src="assets/reset-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'reset-hover.png');" onmouseOut="changeButton(event, 'reset-idle.png');" onmousedown="changeButton(event, 'reset-grab.png')" onmouseup="changeButton(event, 'reset-hover.png');"">
-<img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'play-hover.png');" onmouseOut="changeButton(event, 'play-idle.png');" onmousedown="changeButton(event, 'play-grab.png')" onmouseup="changeButton(event, 'play-hover.png');"">
-<img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
-<br>
-<canvas id="PickerCanvas" width="1280" height="80" style="position: absolute; top: 720px; left: 0px;"></canvas>
-
+<div id="topcontainer" style="position: absolute; top: 0px; left: 0px;">
+	<img src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
+	<canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
+	<img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
+	<img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" onclick="startGame(4, 4, 'hard-text.png');" onmouseover="changeButton(event, 'hard-hover.png');" onmouseOut="changeButton(event, 'hard-idle.png');" onmousedown="changeButton(event, 'hard-grab.png')" onmouseup="changeButton(event, 'hard-hover.png');"">
+	<img id="insane-button" src="assets/insane-idle.png" style="position: absolute; top: 556px; left: 115px;" onclick="startGame(6, 6, 'insane-text.png');"  onmouseover="changeButton(event, 'insane-hover.png');" onmouseOut="changeButton(event, 'insane-idle.png');" onmousedown="changeButton(event, 'insane-grab.png')" onmouseup="changeButton(event, 'insane-hover.png');"">
+	<img id="reset-button" src="assets/reset-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'reset-hover.png');" onmouseOut="changeButton(event, 'reset-idle.png');" onmousedown="changeButton(event, 'reset-grab.png')" onmouseup="changeButton(event, 'reset-hover.png');"">
+	<img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'play-hover.png');" onmouseOut="changeButton(event, 'play-idle.png');" onmousedown="changeButton(event, 'play-grab.png')" onmouseup="changeButton(event, 'play-hover.png');"">
+	<img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
+	<br>
+	<canvas id="PickerCanvas" width="1280" height="80" style="position: absolute; top: 720px; left: 0px;"></canvas>
+<div id="topcontainer">
 <!--
 Problems
-* relative positioning of buttons and of picker canvas
 * fix for more mobile phones
 * rotation on iphone
 * splash screen is content-aware resized (looks bad), and we should add splash screens for more ios types (ipad, iphone 5...)
@@ -118,10 +118,11 @@ Problems
 	function mouseMove(e)
 	{
 		var canvas = document.getElementById('PuzzleCanvas');
+		var topContainer = document.getElementById('topcontainer');
 		if (!e) var e = window.event;
 		e.preventDefault();
-		mouseX = e.pageX - canvas.offsetLeft;
-		mouseY = e.pageY - canvas.offsetTop;
+		mouseX = e.pageX - canvas.offsetLeft - topContainer.offsetLeft;
+		mouseY = e.pageY - canvas.offsetTop - topContainer.offsetTop;
 	}
 
 	function initPuzzlePieces()
@@ -368,6 +369,7 @@ Problems
 
 	// support for iPhone
 	var can = document.getElementById('PuzzleCanvas');
+	var topContainer = document.getElementById('topcontainer');
     can.addEventListener("touchstart", touchStart, false);
     can.addEventListener("touchmove", touchMove, true);
     can.addEventListener("touchend", touchEnd, false);
@@ -381,8 +383,8 @@ Problems
 	{
 		if (!e) var e = event;
 		e.preventDefault();
-		mouseX = e.targetTouches[0].pageX - can.offsetLeft;
-		mouseY = e.targetTouches[0].pageY - can.offsetTop;
+		mouseX = e.targetTouches[0].pageX - can.offsetLeft - topContainer.offsetLeft;
+		mouseY = e.targetTouches[0].pageY - can.offsetTop - topContainer.offsetTop;
 	}
 	function touchEnd(e)
 	{
