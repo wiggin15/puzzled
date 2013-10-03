@@ -4,7 +4,6 @@ CACHE MANIFEST
 ./assets/easy-hover.png
 ./assets/easy-idle.png
 ./assets/easy-text.png
-./assets/grab.png
 ./assets/hard-grab.png
 ./assets/hard-hover.png
 ./assets/hard-idle.png
@@ -13,7 +12,6 @@ CACHE MANIFEST
 ./assets/insane-hover.png
 ./assets/insane-idle.png
 ./assets/insane-text.png
-./assets/open.png
 ./assets/play-grab.png
 ./assets/play-hover.png
 ./assets/play-idle.png
