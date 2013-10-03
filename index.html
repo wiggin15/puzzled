@@ -5,14 +5,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
 
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <link rel="apple-touch-icon" href="assets/puzzled-icon-cut.png"/>
-    <link rel="apple-touch-startup-image" href="splash-screen.png" />
+    <link rel="apple-touch-icon" href="assets/puzzled-icon-cut.jpg"/>
+    <link rel="apple-touch-startup-image" href="assets/splash-screen.jpg" />
 	<title>Puzzled</title>
 	
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	<!-- try to make IE9 not run in compatibility mode -->
 </head>
 <body>
-<img src="assets/puzzled-bg.png" style="position: absolute; top: 0px; left: 0px;">
+<img src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
 <canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
 <img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
 <img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" onclick="startGame(4, 4, 'hard-text.png');" onmouseover="changeButton(event, 'hard-hover.png');" onmouseOut="changeButton(event, 'hard-idle.png');" onmousedown="changeButton(event, 'hard-grab.png')" onmouseup="changeButton(event, 'hard-hover.png');"">
@@ -30,6 +30,7 @@ Problems
 * fix for more mobile phones
 * rotation on iphone
 * on iPhone, picker is cut off on bottom
+* splash screen is skewed, and we should add splash screens for more ios types (ipad, iphone 5...)
 -->
 
 <script type="text/javascript">
