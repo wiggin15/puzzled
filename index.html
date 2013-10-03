@@ -25,12 +25,10 @@
 
 <!--
 Problems
-* when page is scrolled, event coordinates are wrong
 * relative positioning of buttons and of picker canvas
 * fix for more mobile phones
 * rotation on iphone
-* on iPhone, picker is cut off on bottom
-* splash screen is skewed, and we should add splash screens for more ios types (ipad, iphone 5...)
+* splash screen is content-aware resized (looks bad), and we should add splash screens for more ios types (ipad, iphone 5...)
 -->
 
 <script type="text/javascript">
@@ -122,8 +120,8 @@ Problems
 		var canvas = document.getElementById('PuzzleCanvas');
 		if (!e) var e = window.event;
 		e.preventDefault();
-		mouseX = e.clientX - canvas.offsetLeft;
-		mouseY = e.clientY - canvas.offsetTop;
+		mouseX = e.pageX - canvas.offsetLeft;
+		mouseY = e.pageY - canvas.offsetTop;
 	}
 
 	function initPuzzlePieces()
@@ -341,8 +339,8 @@ Problems
 
 	function scrollMove(event) {
 		if (scrollActive) {
-			scrollDelta -= event.clientX - lastScrollX;
-			lastScrollX = event.clientX;
+			scrollDelta -= event.pageX - lastScrollX;
+			lastScrollX = event.pageX;
 			maxAllowedDelta = puzzles.length * 106 - 1280;
 			scrollDelta = (scrollDelta > maxAllowedDelta) ? (maxAllowedDelta) : (scrollDelta < 0 ? 0 : scrollDelta);
 			drawScroller();
@@ -350,14 +348,14 @@ Problems
 		event.preventDefault();
 	}
 	function scrollClick(event) {
-		scrollStartX = event.clientX;
+		scrollStartX = event.pageX;
 		lastScrollX = scrollStartX;
 		scrollActive = true;
 		event.preventDefault();
 	}
 	function scrollRelease(event) {
-		if (scrollActive && Math.abs(event.clientX - scrollStartX) < 5) {
-			hoveredPuzzle = Math.floor((event.clientX + scrollDelta) / 106);
+		if (scrollActive && Math.abs(event.pageX - scrollStartX) < 5) {
+			hoveredPuzzle = Math.floor((event.pageX + scrollDelta) / 106);
 			image.src = puzzles[hoveredPuzzle].src;
 			reset();
 		}
@@ -398,21 +396,21 @@ Problems
 	var lastScrollTouchX;
 	function scrollTouchStart(e)
 	{
-		e.clientX = e.targetTouches[0].pageX;
+		e.pageX = e.targetTouches[0].pageX;
 		scrollClick(e);
-		lastScrollTouchX = e.clientX;
+		lastScrollTouchX = e.pageX;
 	}
 	function scrollTouchMove(e)
 	{
-		e.clientX = e.targetTouches[0].pageX;
+		e.pageX = e.targetTouches[0].pageX;
 		scrollMove(e);
-		lastScrollTouchX = e.clientX;
+		lastScrollTouchX = e.pageX;
 	}
 	function scrollTouchEnd(e)
 	{
-		// we can't get the clientX from e (because we prevented the start touch event, or something like that)
+		// we can't get the pageX from e (because we prevented the start touch event, or something like that)
 		// so we use the last known X from touch move / touch start
-		e.clientX = lastScrollTouchX;
+		e.pageX = lastScrollTouchX;
 		scrollRelease(e);
 	}
 
