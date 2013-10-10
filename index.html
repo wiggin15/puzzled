@@ -7,13 +7,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <link rel="apple-touch-icon" href="assets/puzzled-icon-cut.jpg"/>
     <link rel="apple-touch-startup-image" href="assets/splash-screen.jpg" />
+    <link rel="apple-touch-startup-image" href="assets/splash-screen.jpg" media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="assets/splash-screen-tall.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
 	<title>Puzzled</title>
 	
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	<!-- try to make IE9 not run in compatibility mode -->
 </head>
 <body>
 <div id="topcontainer" style="position: absolute; top: 0px; left: 0px;">
-	<img src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
+	<img id="bg" src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
 	<canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
 	<img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
 	<img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" onclick="startGame(4, 4, 'hard-text.png');" onmouseover="changeButton(event, 'hard-hover.png');" onmouseOut="changeButton(event, 'hard-idle.png');" onmousedown="changeButton(event, 'hard-grab.png')" onmouseup="changeButton(event, 'hard-hover.png');"">
@@ -23,12 +25,12 @@
 	<img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
 	<br>
 	<canvas id="PickerCanvas" width="1280" height="80" style="position: absolute; top: 720px; left: 0px;"></canvas>
-<div id="topcontainer">
+</div>
 <!--
 Problems
 * fix for more mobile phones
 * rotation on iphone
-* splash screen is content-aware resized (looks bad), and we should add splash screens for more ios types (ipad, iphone 5...)
+* content aware resizes look bad (splash screen, splash screen tall, bg tall) + no sizes for ipads
 -->
 
 <script type="text/javascript">
@@ -36,6 +38,22 @@ Problems
 	if (navigator.appName == "Microsoft Internet Explorer" && navigator.appVersion.indexOf("5.0") != 0)
 	{
 		alert("You are using an unsupported version of Internet Explorer, or viewing the site using compatibility mode.");
+	}
+
+	var page_width = 1280;
+	var is_iphone5 = (screen.availHeight == 548)
+	if (is_iphone5)
+	{
+		page_width = 1515;
+		document.getElementById("bg").src = "assets/puzzled-bg-tall.jpg";
+		document.getElementById("easy-button").style.left= "180px";
+		document.getElementById("hard-button").style.left= "180px";
+		document.getElementById("insane-button").style.left= "180px";
+		document.getElementById("reset-button").style.left= "180px";
+		document.getElementById("play-button").style.left= "180px";
+		document.getElementById("level-text").style.left= "216px";
+		document.getElementById("PuzzleCanvas").style.left= "684px";
+		document.getElementById("PickerCanvas").width = page_width;
 	}
 
 	function GetImagePath()
@@ -331,7 +349,7 @@ Problems
 
 	function drawScroller() {
 		var ctx = pickerCanvas.getContext('2d');
-		ctx.clearRect(0, 0, 1280, 80);
+		ctx.clearRect(0, 0, page_width, 80);
 		for (var i = 0; i < puzzles.length; i++)
 		{
 			ctx.drawImage(puzzles[i], i*106 - scrollDelta, 0, 106, 80);
@@ -342,7 +360,7 @@ Problems
 		if (scrollActive) {
 			scrollDelta -= event.pageX - lastScrollX;
 			lastScrollX = event.pageX;
-			maxAllowedDelta = puzzles.length * 106 - 1280;
+			maxAllowedDelta = puzzles.length * 106 - page_width;
 			scrollDelta = (scrollDelta > maxAllowedDelta) ? (maxAllowedDelta) : (scrollDelta < 0 ? 0 : scrollDelta);
 			drawScroller();
 		}

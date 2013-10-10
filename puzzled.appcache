@@ -16,11 +16,13 @@ CACHE MANIFEST
 ./assets/play-hover.png
 ./assets/play-idle.png
 ./assets/puzzled-bg.jpg
+./assets/puzzled-bg-tall.jpg
 ./assets/puzzled-icon-cut.jpg
 ./assets/reset-grab.png
 ./assets/reset-hover.png
 ./assets/reset-idle.png
 ./assets/splash-screen.jpg
+./assets/splash-screen-tall.jpg
 ./assets/start-grab.png
 ./assets/start-hover.png
 ./assets/start-idle.png
