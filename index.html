@@ -10,7 +10,7 @@
     <link rel="apple-touch-startup-image" href="assets/splash-screen.jpg" media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)">
     <link rel="apple-touch-startup-image" href="assets/splash-screen-tall.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
 	<title>Puzzled</title>
-	
+
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	<!-- try to make IE9 not run in compatibility mode -->
 </head>
 <body>
@@ -23,7 +23,6 @@
 	<img id="reset-button" src="assets/reset-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'reset-hover.png');" onmouseOut="changeButton(event, 'reset-idle.png');" onmousedown="changeButton(event, 'reset-grab.png')" onmouseup="changeButton(event, 'reset-hover.png');"">
 	<img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'play-hover.png');" onmouseOut="changeButton(event, 'play-idle.png');" onmousedown="changeButton(event, 'play-grab.png')" onmouseup="changeButton(event, 'play-hover.png');"">
 	<img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
-	<br>
 	<canvas id="PickerCanvas" width="1280" height="80" style="position: absolute; top: 720px; left: 0px;"></canvas>
 </div>
 <!--
@@ -107,7 +106,7 @@ Problems
 	preload_img("assets/easy-text.png");
 	preload_img("assets/hard-text.png");
 	preload_img("assets/insane-text.png");
-	
+
 	function PuzzlePiece()
 	{
 		this.origX = 0;
@@ -230,7 +229,7 @@ Problems
 		document.getElementById('level-text').style.visibility = "";
 
 		document.getElementById('level-text').src = "assets/" + png;
-	
+
 		num_cols = c;
 		num_rows = r;
 		draw_border = true;
@@ -406,8 +405,8 @@ Problems
 	{
 		if (!e) var e = event;
 		e.preventDefault();
-		mouseX = e.targetTouches[0].pageX - can.offsetLeft - topContainer.offsetLeft;
-		mouseY = e.targetTouches[0].pageY - can.offsetTop - topContainer.offsetTop;
+		mouseX = e.touches[0].pageX - can.offsetLeft - topContainer.offsetLeft;
+		mouseY = e.touches[0].pageY - can.offsetTop - topContainer.offsetTop;
 	}
 	function touchEnd(e)
 	{
@@ -421,13 +420,13 @@ Problems
 	var lastScrollTouchX;
 	function scrollTouchStart(e)
 	{
-		e.pageX = e.targetTouches[0].pageX;
+		e.pageX = e.touches[0].pageX;
 		scrollClick(e);
 		lastScrollTouchX = e.pageX;
 	}
 	function scrollTouchMove(e)
 	{
-		e.pageX = e.targetTouches[0].pageX;
+		e.pageX = e.touches[0].pageX;
 		scrollMove(e);
 		lastScrollTouchX = e.pageX;
 	}
@@ -440,7 +439,7 @@ Problems
 	{
 		document.ontouchmove = function(e) {e.preventDefault()}; // disable scroll in app mode
 	}
- 
+
 </script>
 </body>
 </html>
