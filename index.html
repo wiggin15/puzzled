@@ -322,6 +322,7 @@ Problems
 	var scrollStartX = 0;
 	var scrollDelta = 0;
 	var lastScrollX = 0;
+	var hoveredPuzzle = null;
 	var pickerCanvas = document.getElementById('PickerCanvas');
 
 	function scrollerInit() {
@@ -359,6 +360,10 @@ Problems
 	function scrollMove(event) {
 		if (scrollActive) {
 			scrollDelta -= event.pageX - lastScrollX;
+			if (event.pageX - lastScrollX)
+			{
+				hoveredPuzzle = null;
+			}
 			lastScrollX = event.pageX;
 			maxAllowedDelta = puzzles.length * 106 - page_width;
 			scrollDelta = (scrollDelta > maxAllowedDelta) ? (maxAllowedDelta) : (scrollDelta < 0 ? 0 : scrollDelta);
@@ -369,12 +374,12 @@ Problems
 	function scrollClick(event) {
 		scrollStartX = event.pageX;
 		lastScrollX = scrollStartX;
+		hoveredPuzzle = Math.floor((event.pageX + scrollDelta) / 106);;
 		scrollActive = true;
 		event.preventDefault();
 	}
 	function scrollRelease(event) {
-		if (scrollActive && Math.abs(event.pageX - scrollStartX) < 5) {
-			hoveredPuzzle = Math.floor((event.pageX + scrollDelta) / 106);
+		if (scrollActive && hoveredPuzzle !== null) {
 			image.src = puzzles[hoveredPuzzle].src;
 			reset();
 		}
@@ -428,9 +433,6 @@ Problems
 	}
 	function scrollTouchEnd(e)
 	{
-		// we can't get the pageX from e (because we prevented the start touch event, or something like that)
-		// so we use the last known X from touch move / touch start
-		e.pageX = lastScrollTouchX;
 		scrollRelease(e);
 	}
 
