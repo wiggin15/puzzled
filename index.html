@@ -440,6 +440,24 @@ Problems
 		document.ontouchmove = function(e) {e.preventDefault()}; // disable scroll in app mode
 	}
 
+	// orientation
+	function setRotation(isRotated)
+	{
+		topContainer.style.transform = isRotated ? "rotate(90deg)" : "";
+		topContainer.style.transformOrigin = "0px 0px";
+		topContainer.style.webkitTransformOrigin = "0px 0px";
+		topContainer.style.webkitTransform = isRotated ? "rotate(90deg)" : "";
+		topContainer.style.left = isRotated ? "800px" : "0px";
+	}
+	function readDeviceOrientation() {
+		if (Math.abs(window.orientation) === 0) {
+			setRotation(true);
+		} else {
+			setRotation(false);
+		}}
+	window.onorientationchange = readDeviceOrientation;
+	readDeviceOrientation();
+
 </script>
 </body>
 </html>
