@@ -13,8 +13,8 @@
 
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	<!-- try to make IE9 not run in compatibility mode -->
 </head>
-<body>
-<div id="topcontainer" style="position: absolute; top: 0px; left: 0px;">
+<body style="background-color:black;">
+<div id="topcontainer" style="position: absolute; top: 50%; left: 50%; margin-left: -640px; margin-top: -400px">
 	<img id="bg" src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
 	<canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
 	<img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
@@ -27,9 +27,11 @@
 </div>
 <!--
 Problems
-* fix for more mobile phones
-* rotation on iphone
-* content aware resizes look bad (splash screen, splash screen tall, bg tall) + no sizes for ipads
+* check on more mobile phones / tablets etc.
+* lock scroll in non-app mode
+* tall splash screen looks bad + no sizes for ipads etc.
+* lock rotation (iphone app limitation)
+* every time we rotate, the bg gets cut a bit from the right (iphone bug?)
 -->
 
 <script type="text/javascript">
@@ -40,20 +42,6 @@ Problems
 	}
 
 	var page_width = 1280;
-	var is_iphone5 = (screen.availHeight == 548)
-	if (is_iphone5)
-	{
-		page_width = 1515;
-		document.getElementById("bg").src = "assets/puzzled-bg-tall.jpg";
-		document.getElementById("easy-button").style.left= "180px";
-		document.getElementById("hard-button").style.left= "180px";
-		document.getElementById("insane-button").style.left= "180px";
-		document.getElementById("reset-button").style.left= "180px";
-		document.getElementById("play-button").style.left= "180px";
-		document.getElementById("level-text").style.left= "216px";
-		document.getElementById("PuzzleCanvas").style.left= "684px";
-		document.getElementById("PickerCanvas").width = page_width;
-	}
 
 	function GetImagePath()
 	{
@@ -447,7 +435,8 @@ Problems
 		topContainer.style.transformOrigin = "0px 0px";
 		topContainer.style.webkitTransformOrigin = "0px 0px";
 		topContainer.style.webkitTransform = isRotated ? "rotate(90deg)" : "";
-		topContainer.style.left = isRotated ? "800px" : "0px";
+		topContainer.style.marginLeft = isRotated ? "400px" : "-640px";
+		topContainer.style.marginTop = isRotated ? "-640px" : "-400px";
 	}
 	function readDeviceOrientation() {
 		if (Math.abs(window.orientation) === 0) {
