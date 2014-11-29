@@ -361,7 +361,7 @@ Problems
 	function scrollClick(event) {
 		scrollStartX = event.pageX;
 		lastScrollX = scrollStartX;
-		hoveredPuzzle = Math.floor((event.pageX + scrollDelta) / 106);;
+		hoveredPuzzle = Math.floor((event.offsetX + scrollDelta) / 106);;
 		scrollActive = true;
 		event.preventDefault();
 	}
