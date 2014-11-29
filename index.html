@@ -447,6 +447,17 @@ Problems
 	window.onorientationchange = readDeviceOrientation;
 	readDeviceOrientation();
 
+	// lock scroll in non-app mode
+	function lockScroll(id) { document.getElementById(id).ontouchmove = function(e){ e.preventDefault(); } }
+	lockScroll("bg");
+	lockScroll("easy-button");
+	lockScroll("hard-button");
+	lockScroll("insane-button");
+	lockScroll("play-button");
+	lockScroll("reset-button");
+	lockScroll("level-text");
+	lockScroll("PickerCanvas");
+
 </script>
 </body>
 </html>
