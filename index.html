@@ -409,6 +409,7 @@
 		e.pageX = e.touches[0].pageX;
 		scrollMove(e);
 		lastScrollTouchX = e.pageX;
+		e.preventDefault()
 	}
 	function scrollTouchEnd(e)
 	{
@@ -448,7 +449,6 @@
 	lockScroll("play-button");
 	lockScroll("reset-button");
 	lockScroll("level-text");
-	lockScroll("PickerCanvas");
 
 </script>
 </body>
