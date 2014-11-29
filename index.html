@@ -33,7 +33,10 @@
         alert("You are using an unsupported version of Internet Explorer, or viewing the site using compatibility mode.");
     }
 
-    var page_width = 1280;
+    var canvas = document.getElementById('PuzzleCanvas');
+    var pickerCanvas = document.getElementById('PickerCanvas');
+    var topContainer = document.getElementById('topcontainer');
+    var fps = 60;
 
     function GetImagePath()
     {
@@ -58,7 +61,7 @@
         {
             window.clearInterval(timer);
         }
-        timer = setInterval("redraw()", 1000/60);
+        timer = setInterval("redraw()", 1000/fps);
     }
     image.src = GetImagePath();
 
@@ -114,8 +117,6 @@
 
     function mouseMove(e)
     {
-        var canvas = document.getElementById('PuzzleCanvas');
-        var topContainer = document.getElementById('topcontainer');
         if (!e) var e = window.event;
         e.preventDefault();
         mouseX = e.pageX - canvas.offsetLeft - topContainer.offsetLeft;
@@ -129,8 +130,8 @@
         {
             for (var j = 0; j < num_rows; j++)
             {
-                var x = Math.floor(640 / num_cols * i);
-                var y = Math.floor(480 / num_rows * j);
+                var x = Math.floor(canvas.width / num_cols * i);
+                var y = Math.floor(canvas.height / num_rows * j);
                 puzzle_pieces[i * num_rows + j] = new PuzzlePiece();
                 puzzle_pieces[i * num_rows + j].origX = x;
                 puzzle_pieces[i * num_rows + j].origY = y;
@@ -167,7 +168,10 @@
     {
         for (var i = 0; i < num_cols*num_rows; i++)
         {
-            if (mouseX > puzzle_pieces[i].posX && mouseX < puzzle_pieces[i].posX + 640/num_cols && mouseY > puzzle_pieces[i].posY && mouseY < puzzle_pieces[i].posY + 480/num_rows)
+            if (mouseX > puzzle_pieces[i].posX &&
+            	mouseX < puzzle_pieces[i].posX + canvas.width/num_cols &&
+            	mouseY > puzzle_pieces[i].posY &&
+            	mouseY < puzzle_pieces[i].posY + canvas.height/num_rows)
             {
                 return i;
             }
@@ -257,7 +261,6 @@
 
     function redraw()
     {
-        var canvas = document.getElementById('PuzzleCanvas');
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, 640, 480);
         for (var i = 0; i < num_cols*num_rows; i++)
@@ -302,10 +305,13 @@
     var scrollDelta = 0;
     var lastScrollX = 0;
     var hoveredPuzzle = null;
-    var pickerCanvas = document.getElementById('PickerCanvas');
+    var pickerWidth = topContainer.scrollWidth;
+    var pickerHeight = pickerCanvas.height;
+    var pickerSingleWidth = 106;
+    var numPuzzles = 15;
 
     function scrollerInit() {
-        for (var i = 1; i <= 15; i++)
+        for (var i = 1; i <= numPuzzles; i++)
         {
             img = new Image();
             img.src = "puzzles/image" + i + ".jpg";
@@ -329,10 +335,10 @@
 
     function drawScroller() {
         var ctx = pickerCanvas.getContext('2d');
-        ctx.clearRect(0, 0, page_width, 80);
+        ctx.clearRect(0, 0, pickerWidth, pickerHeight);
         for (var i = 0; i < puzzles.length; i++)
         {
-            ctx.drawImage(puzzles[i], i*106 - scrollDelta, 0, 106, 80);
+            ctx.drawImage(puzzles[i], i*pickerSingleWidth - scrollDelta, 0, pickerSingleWidth, pickerHeight);
         }
     }
 
@@ -344,7 +350,7 @@
                 hoveredPuzzle = null;
             }
             lastScrollX = event.pageX;
-            maxAllowedDelta = puzzles.length * 106 - page_width;
+            maxAllowedDelta = puzzles.length * pickerSingleWidth - pickerWidth;
             scrollDelta = (scrollDelta > maxAllowedDelta) ? (maxAllowedDelta) : (scrollDelta < 0 ? 0 : scrollDelta);
             drawScroller();
         }
@@ -353,7 +359,7 @@
     function scrollClick(event) {
         scrollStartX = event.pageX;
         lastScrollX = scrollStartX;
-        hoveredPuzzle = Math.floor((event.offsetX + scrollDelta) / 106);;
+        hoveredPuzzle = Math.floor((event.offsetX + scrollDelta) / pickerSingleWidth);;
         scrollActive = true;
         event.preventDefault();
     }
@@ -370,11 +376,9 @@
     /*** end scroller ***/
 
     // support for iPhone
-    var can = document.getElementById('PuzzleCanvas');
-    var topContainer = document.getElementById('topcontainer');
-    can.addEventListener("touchstart", touchStart, false);
-    can.addEventListener("touchmove", touchMove, true);
-    can.addEventListener("touchend", touchEnd, false);
+    canvas.addEventListener("touchstart", touchStart, false);
+    canvas.addEventListener("touchmove", touchMove, true);
+    canvas.addEventListener("touchend", touchEnd, false);
 
     function touchStart(e)
     {
@@ -385,8 +389,8 @@
     {
         if (!e) var e = event;
         e.preventDefault();
-        mouseX = e.touches[0].pageX - can.offsetLeft - topContainer.offsetLeft;
-        mouseY = e.touches[0].pageY - can.offsetTop - topContainer.offsetTop;
+        mouseX = e.touches[0].pageX - canvas.offsetLeft - topContainer.offsetLeft;
+        mouseY = e.touches[0].pageY - canvas.offsetTop - topContainer.offsetTop;
     }
     function touchEnd(e)
     {
