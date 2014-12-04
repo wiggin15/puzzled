@@ -231,9 +231,12 @@
         var flag = true;
         for (var i = 0; i < num_cols*num_rows; i++)
         {
-            if (puzzle_pieces[i].animationFrame != 0 || puzzle_pieces[i].posX != puzzle_pieces[i].origX || puzzle_pieces[i].posY != puzzle_pieces[i].origY)
+            if (puzzle_pieces[i].animationFrame != 0 ||
+                puzzle_pieces[i].posX != puzzle_pieces[i].origX ||
+                puzzle_pieces[i].posY != puzzle_pieces[i].origY)
             {
                 flag = false;
+                break;
             }
         }
         if (flag)
@@ -359,7 +362,7 @@
     function scrollClick(event) {
         scrollStartX = event.pageX;
         lastScrollX = scrollStartX;
-        hoveredPuzzle = Math.floor((event.offsetX + scrollDelta) / pickerSingleWidth);;
+        hoveredPuzzle = Math.floor((event.offsetX + scrollDelta) / pickerSingleWidth);
         scrollActive = true;
         event.preventDefault();
     }
@@ -445,7 +448,9 @@
     readDeviceOrientation();
 
     // lock scroll in non-app mode
-    function lockScroll(id) { document.getElementById(id).ontouchmove = function(e){ e.preventDefault(); } }
+    function lockScroll(id) {
+        document.getElementById(id).ontouchmove = function(e){ e.preventDefault(); }
+    }
     lockScroll("bg");
     lockScroll("easy-button");
     lockScroll("hard-button");
