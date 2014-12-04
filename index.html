@@ -408,12 +408,14 @@
     function scrollTouchStart(e)
     {
         e.pageX = e.touches[0].pageX;
+        e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
         scrollClick(e);
         lastScrollTouchX = e.pageX;
     }
     function scrollTouchMove(e)
     {
         e.pageX = e.touches[0].pageX;
+        e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
         scrollMove(e);
         lastScrollTouchX = e.pageX;
         e.preventDefault()
