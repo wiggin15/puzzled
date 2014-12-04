@@ -16,15 +16,16 @@
 <body style="background-color:black;">
 <div id="topcontainer" style="position: absolute; top: 50%; left: 50%; margin-left: -640px; margin-top: -400px">
     <img id="bg" src="assets/puzzled-bg.jpg" style="position: absolute; top: 0px; left: 0px;">
-    <canvas id="PuzzleCanvas" width="640" height="480" onmousemove="mouseMove(event);" onmousedown="mouseClick(event);" onmouseup="mouseRelease(event);" style="position: absolute; top: 120px; left: 510px;" onmouseout="mouseRelease(event);"></canvas>
-    <img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" onclick="startGame(3, 3, 'easy-text.png');" onmouseover="changeButton(event, 'easy-hover.png');" onmouseOut="changeButton(event, 'easy-idle.png');" onmousedown="changeButton(event, 'easy-grab.png')" onmouseup="changeButton(event, 'easy-hover.png');">
-    <img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" onclick="startGame(4, 4, 'hard-text.png');" onmouseover="changeButton(event, 'hard-hover.png');" onmouseOut="changeButton(event, 'hard-idle.png');" onmousedown="changeButton(event, 'hard-grab.png')" onmouseup="changeButton(event, 'hard-hover.png');"">
-    <img id="insane-button" src="assets/insane-idle.png" style="position: absolute; top: 556px; left: 115px;" onclick="startGame(6, 6, 'insane-text.png');"  onmouseover="changeButton(event, 'insane-hover.png');" onmouseOut="changeButton(event, 'insane-idle.png');" onmousedown="changeButton(event, 'insane-grab.png')" onmouseup="changeButton(event, 'insane-hover.png');"">
-    <img id="reset-button" src="assets/reset-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'reset-hover.png');" onmouseOut="changeButton(event, 'reset-idle.png');" onmousedown="changeButton(event, 'reset-grab.png')" onmouseup="changeButton(event, 'reset-hover.png');"">
-    <img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" onclick="reset();"  onmouseover="changeButton(event, 'play-hover.png');" onmouseOut="changeButton(event, 'play-idle.png');" onmousedown="changeButton(event, 'play-grab.png')" onmouseup="changeButton(event, 'play-hover.png');"">
+    <canvas id="PuzzleCanvas" width="640" height="480"style="position: absolute; top: 120px; left: 510px;"></canvas>
+    <img id="easy-button" src="assets/easy-idle.png" style="position: absolute; top: 352px; left: 115px;" >
+    <img id="hard-button" src="assets/hard-idle.png" style="position: absolute; top: 454px; left: 115px;" >
+    <img id="insane-button" src="assets/insane-idle.png" style="position: absolute; top: 556px; left: 115px;" >
+    <img id="reset-button" src="assets/reset-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" >
+    <img id="play-button" src="assets/play-idle.png" style="position: absolute; top: 556px; left: 115px; visibility: hidden;" >
     <img id="level-text" src="" style="position: absolute; top: 382px; left: 151px; visibility: hidden;">
     <canvas id="PickerCanvas" width="1280" height="80" style="position: absolute; top: 720px; left: 0px;"></canvas>
 </div>
+
 
 <script type="text/javascript">
     // supporting Opera, Firefox, Chrome, Safari, IE9 without compatibility mode, and Safari on iPhone
@@ -37,8 +38,19 @@
     var pickerCanvas = document.getElementById('PickerCanvas');
     var topContainer = document.getElementById('topcontainer');
     var fps = 60;
+    var image = new Image();
+    var timer = null;
+    var preloaded_objects = new Array();
+    var num_rows = 1;
+    var num_cols = 1;
+    var mouseX = 0;
+    var mouseY = 0;
+    var playing = false;
+    var puzzle_pieces;          // array of PuzzlePiece instances
+    var clicked_piece = -1;
+    var clicked = false;
 
-    function GetImagePath()
+    function getImagePath()
     {
         // parse query string for "image" parameter, or return default path
         var name = "image"
@@ -52,43 +64,68 @@
         return decodeURIComponent(results[1].replace(/\+/g, " "));
     }
 
-    var image = new Image();
-    var timer = null;
-    image.onload = function()
-    {
-        initPuzzlePieces();
-        if (timer)
-        {
-            window.clearInterval(timer);
-        }
-        timer = setInterval("redraw()", 1000/fps);
+    function changeButton(e, new_src) {
+        e.target.src = "assets/" + new_src;
     }
-    image.src = GetImagePath();
 
-    var preloaded_objects = new Array();
-    function preload_img(src)
-    {
+    function makeButton(button_name, action) {
+        var button_element = document.getElementById(button_name + '-button');
+        button_element.addEventListener("click", action);
+        button_element.addEventListener("mouseover", function(e) { changeButton(e, button_name + '-hover.png') });
+        button_element.addEventListener("mouseup", function(e) { changeButton(e, button_name + '-hover.png') });
+        button_element.addEventListener("mousedown", function(e) { changeButton(e, button_name + '-grab.png') });
+        button_element.addEventListener("mouseout", function(e) { changeButton(e, button_name + '-idle.png') });
+    }
+
+    function initHandlers() {
+        makeButton("easy", function() { startGame(3, 3, 'easy-text.png'); });
+        makeButton("hard", function() { startGame(4, 4, 'hard-text.png'); });
+        makeButton("insane", function() { startGame(6, 6, 'insane-text.png'); });
+        makeButton("reset", reset);
+        makeButton("play", reset);
+        canvas.addEventListener("mousemove", mouseMove);
+        canvas.addEventListener("mousedown", mouseClick);
+        canvas.addEventListener("mouseup", mouseRelease);
+        canvas.addEventListener("mouseout", mouseRelease);
+    }
+
+    function initImage() {
+        image.onload = function()
+        {
+            initPuzzlePieces();
+            if (timer) {
+                window.clearInterval(timer);
+            }
+            timer = setInterval("redraw()", 1000/fps);
+        }
+        image.src = getImagePath();
+    }
+
+    function preload_img(src) {
         preloaded_objects[preloaded_objects.length] = new Image();
         preloaded_objects[preloaded_objects.length-1].src = src;
     }
-    preload_img("assets/easy-idle.png");
-    preload_img("assets/easy-hover.png");
-    preload_img("assets/easy-grab.png");
-    preload_img("assets/hard-idle.png");
-    preload_img("assets/hard-hover.png");
-    preload_img("assets/hard-grab.png");
-    preload_img("assets/insane-idle.png");
-    preload_img("assets/insane-hover.png");
-    preload_img("assets/insane-grab.png");
-    preload_img("assets/reset-idle.png");
-    preload_img("assets/reset-hover.png");
-    preload_img("assets/reset-grab.png");
-    preload_img("assets/play-idle.png");
-    preload_img("assets/play-hover.png");
-    preload_img("assets/play-grab.png");
-    preload_img("assets/easy-text.png");
-    preload_img("assets/hard-text.png");
-    preload_img("assets/insane-text.png");
+
+    function preloadImages() {
+        preload_img("assets/easy-idle.png");
+        preload_img("assets/easy-hover.png");
+        preload_img("assets/easy-grab.png");
+        preload_img("assets/hard-idle.png");
+        preload_img("assets/hard-hover.png");
+        preload_img("assets/hard-grab.png");
+        preload_img("assets/insane-idle.png");
+        preload_img("assets/insane-hover.png");
+        preload_img("assets/insane-grab.png");
+        preload_img("assets/reset-idle.png");
+        preload_img("assets/reset-hover.png");
+        preload_img("assets/reset-grab.png");
+        preload_img("assets/play-idle.png");
+        preload_img("assets/play-hover.png");
+        preload_img("assets/play-grab.png");
+        preload_img("assets/easy-text.png");
+        preload_img("assets/hard-text.png");
+        preload_img("assets/insane-text.png");
+    }
 
     function PuzzlePiece()
     {
@@ -101,35 +138,17 @@
         this.animationFrame = 0;
     }
 
-    var num_rows = 1;
-    var num_cols = 1;
-    var mouseX = 0;
-    var mouseY = 0;
-    var draw_border = false;
-    var puzzle_pieces;
-    var clicked_piece = -1;
-    var clicked = false;
-
-    function changeButton(e, new_src)
-    {
-        e.target.src = "assets/" + new_src;
-    }
-
-    function mouseMove(e)
-    {
+    function mouseMove(e) {
         if (!e) var e = window.event;
         e.preventDefault();
         mouseX = e.pageX - canvas.offsetLeft - topContainer.offsetLeft;
         mouseY = e.pageY - canvas.offsetTop - topContainer.offsetTop;
     }
 
-    function initPuzzlePieces()
-    {
+    function initPuzzlePieces() {
         puzzle_pieces = new Array;
-        for (var i = 0; i < num_cols; i++)
-        {
-            for (var j = 0; j < num_rows; j++)
-            {
+        for (var i = 0; i < num_cols; i++) {
+            for (var j = 0; j < num_rows; j++) {
                 var x = Math.floor(canvas.width / num_cols * i);
                 var y = Math.floor(canvas.height / num_rows * j);
                 puzzle_pieces[i * num_rows + j] = new PuzzlePiece();
@@ -144,10 +163,8 @@
         }
     }
 
-    function shuffle()
-    {
-        for (var i = 0; i < 1000; i++)
-        {
+    function shuffle() {
+        for (var i = 0; i < 1000; i++) {
             var first_piece = puzzle_pieces[Math.floor(Math.random()*num_cols*num_rows)];
             var second_piece = puzzle_pieces[Math.floor(Math.random()*num_cols*num_rows)];
             var tempX = first_piece.posX;
@@ -158,129 +175,112 @@
             second_piece.posY = tempY;
         }
 
-        for (var i = 0; i < num_cols*num_rows; i++)
-        {
+        for (var i = 0; i < num_cols*num_rows; i++) {
             puzzle_pieces[i].animationFrame = 10;
         }
     }
 
-    function hoveredPiece()
-    {
-        for (var i = 0; i < num_cols*num_rows; i++)
-        {
+    function hoveredPiece() {
+        for (var i = 0; i < num_cols*num_rows; i++) {
             if (mouseX > puzzle_pieces[i].posX &&
             	mouseX < puzzle_pieces[i].posX + canvas.width/num_cols &&
             	mouseY > puzzle_pieces[i].posY &&
-            	mouseY < puzzle_pieces[i].posY + canvas.height/num_rows)
-            {
+            	mouseY < puzzle_pieces[i].posY + canvas.height/num_rows) {
                 return i;
             }
         }
         return -1;
     }
 
-    function mouseClick(e)
-    {
+    function mouseClick(e) {
         e.preventDefault();
         clicked_piece = hoveredPiece();
         clicked = true;
     }
-    function mouseRelease(e)
-    {
+
+    function mouseRelease(e) {
         e.preventDefault();
         clicked_piece = -1;
         clicked = false;
     }
 
-    function reset()
-    {
-        document.getElementById('easy-button').style.visibility = "";
-        document.getElementById('hard-button').style.visibility = "";
-        document.getElementById('insane-button').style.visibility = "";
-        document.getElementById('reset-button').style.visibility = "hidden";
+    function togglePlaying(new_playing) {
+        // elements that are displayed when not playing
+        document.getElementById('easy-button').style.visibility = new_playing ? "hidden" : "";
+        document.getElementById('hard-button').style.visibility = new_playing ? "hidden" : "";
+        document.getElementById('insane-button').style.visibility = new_playing ? "hidden" : "";
+        // elements that are displayed when playing
+        document.getElementById('reset-button').style.visibility = new_playing ? "" : "hidden";
+        document.getElementById('level-text').style.visibility = new_playing ? "" : "hidden";
+        // this element will be toggled when the player wins
         document.getElementById('play-button').style.visibility = "hidden";
-        document.getElementById('level-text').style.visibility = "hidden";
-        draw_border = false;
+        playing = new_playing;
+    }
+
+    function reset() {
+        togglePlaying(false);
         initPuzzlePieces();
     }
 
-    function startGame(c, r, png)
-    {
-        document.getElementById('easy-button').style.visibility = "hidden";
-        document.getElementById('hard-button').style.visibility = "hidden";
-        document.getElementById('insane-button').style.visibility = "hidden";
-        document.getElementById('reset-button').style.visibility = "";
-        document.getElementById('level-text').style.visibility = "";
-
+    function startGame(c, r, png) {
+        togglePlaying(true);
         document.getElementById('level-text').src = "assets/" + png;
 
         num_cols = c;
         num_rows = r;
-        draw_border = true;
         initPuzzlePieces();
         shuffle();
     }
 
-    function mathMap(value, inputMin, inputMax, outputMin, outputMax)
-    {
+    function mathMap(value, inputMin, inputMax, outputMin, outputMax) {
         return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
     }
 
-    function checkWin()
-    {
+    function checkWin() {
         var flag = true;
-        for (var i = 0; i < num_cols*num_rows; i++)
-        {
+        for (var i = 0; i < num_cols*num_rows; i++) {
             if (puzzle_pieces[i].animationFrame != 0 ||
                 puzzle_pieces[i].posX != puzzle_pieces[i].origX ||
-                puzzle_pieces[i].posY != puzzle_pieces[i].origY)
-            {
+                puzzle_pieces[i].posY != puzzle_pieces[i].origY) {
                 flag = false;
                 break;
             }
         }
-        if (flag)
-        {
-            draw_border = false;
+        if (flag) {
+            playing = false;
             document.getElementById('reset-button').style.visibility = "hidden";
             document.getElementById('play-button').style.visibility = "";
         }
     }
 
-    function drawPiece(ctx, piece, is_clicked)
-    {
+    function drawPiece(ctx, piece, is_clicked) {
         var drawX = mathMap(piece.animationFrame, 0, 10, piece.posX, piece.animateFromX);
         var drawY = mathMap(piece.animationFrame, 0, 10, piece.posY, piece.animateFromY);
         var drawW = Math.ceil(640 / num_cols);
         var drawH = Math.ceil(480 / num_rows);
         ctx.drawImage(image, piece.origX, piece.origY, drawW, drawH, drawX, drawY, drawW, drawH);
-        if (draw_border)
-        {
+        if (playing) {
+            // draw border
             ctx.lineWidth = 5;
             ctx.strokeStyle = is_clicked ? "#FECC00" : "black";
             ctx.strokeRect(drawX, drawY, drawW, drawH);
         }
     }
 
-    function redraw()
-    {
+    function redraw() {
         var ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, 640, 480);
-        for (var i = 0; i < num_cols*num_rows; i++)
-        {
-            if (puzzle_pieces[i].animationFrame > 0)
-            {
+        for (var i = 0; i < num_cols*num_rows; i++) {
+            if (puzzle_pieces[i].animationFrame > 0) {
                 puzzle_pieces[i].animationFrame--;
             }
             drawPiece(ctx, puzzle_pieces[i], false);
         }
         var hovered_piece = hoveredPiece();
-        if (clicked_piece != -1)
-        {
+        if (clicked_piece != -1) {
             drawPiece(ctx, puzzle_pieces[clicked_piece], true);
         }
-        if (draw_border && clicked && clicked_piece != -1 && hovered_piece != -1 && hovered_piece != clicked_piece)
-        {
+        if (playing && clicked && clicked_piece != -1 && hovered_piece != -1 && hovered_piece != clicked_piece) {
             puzzle_pieces[hovered_piece].animateFromX = puzzle_pieces[hovered_piece].posX;
             puzzle_pieces[hovered_piece].animateFromY = puzzle_pieces[hovered_piece].posY;
             puzzle_pieces[hovered_piece].animationFrame = 10;
@@ -295,25 +295,24 @@
             puzzle_pieces[hovered_piece].posX = tempX;
             puzzle_pieces[hovered_piece].posY = tempY;
         }
-        if (draw_border)
-        {
+        if (playing) {
             checkWin();
         }
     }
 
-    /*** scroller ***/
+    /*** picker ***/
     var puzzles = new Array();
-    var scrollActive = false;
-    var scrollStartX = 0;
-    var scrollDelta = 0;
-    var lastScrollX = 0;
+    var pickerActive = false;
+    var pickerStartX = 0;
+    var pickerScrollDelta = 0;
+    var lastPickerX = 0;
     var hoveredPuzzle = null;
     var pickerWidth = topContainer.scrollWidth;
     var pickerHeight = pickerCanvas.height;
     var pickerSingleWidth = 106;
     var numPuzzles = 15;
 
-    function scrollerInit() {
+    function initPicker() {
         for (var i = 1; i <= numPuzzles; i++)
         {
             img = new Image();
@@ -321,10 +320,10 @@
             img.onload = drawOnLoad;
             puzzles[puzzles.length] = img;
         }
-        pickerCanvas.onmousemove = scrollMove;
-        pickerCanvas.onmousedown = scrollClick;
-        pickerCanvas.onmouseup = scrollRelease;
-        pickerCanvas.onmouseout = scrollRelease;
+        pickerCanvas.onmousemove = pickerMove;
+        pickerCanvas.onmousedown = pickerClick;
+        pickerCanvas.onmouseup = pickerRelease;
+        pickerCanvas.onmouseout = pickerRelease;
     }
 
     function drawOnLoad() {
@@ -333,106 +332,91 @@
                 return;
             }
         }
-        drawScroller();
+        drawPicker();
     }
 
-    function drawScroller() {
+    function drawPicker() {
         var ctx = pickerCanvas.getContext('2d');
         ctx.clearRect(0, 0, pickerWidth, pickerHeight);
         for (var i = 0; i < puzzles.length; i++)
         {
-            ctx.drawImage(puzzles[i], i*pickerSingleWidth - scrollDelta, 0, pickerSingleWidth, pickerHeight);
+            ctx.drawImage(puzzles[i], i*pickerSingleWidth - pickerScrollDelta, 0, pickerSingleWidth, pickerHeight);
         }
     }
 
-    function scrollMove(event) {
-        if (scrollActive) {
-            scrollDelta -= event.pageX - lastScrollX;
-            if (event.pageX - lastScrollX)
-            {
+    function mathClamp(min, value, max) {
+        return (value < min) ? min : ((value > max) ? max : value);
+    }
+
+    function pickerMove(event) {
+        if (pickerActive) {
+            pickerScrollDelta -= event.pageX - lastPickerX;
+            if (event.pageX - lastPickerX) {
                 hoveredPuzzle = null;
             }
-            lastScrollX = event.pageX;
+            lastPickerX = event.pageX;
             maxAllowedDelta = puzzles.length * pickerSingleWidth - pickerWidth;
-            scrollDelta = (scrollDelta > maxAllowedDelta) ? (maxAllowedDelta) : (scrollDelta < 0 ? 0 : scrollDelta);
-            drawScroller();
+            pickerScrollDelta = mathClamp(0, pickerScrollDelta, maxAllowedDelta);
+            drawPicker();
         }
         event.preventDefault();
     }
-    function scrollClick(event) {
-        scrollStartX = event.pageX;
-        lastScrollX = scrollStartX;
-        hoveredPuzzle = Math.floor((event.offsetX + scrollDelta) / pickerSingleWidth);
-        scrollActive = true;
+
+    function pickerClick(event) {
+        pickerStartX = event.pageX;
+        lastPickerX = pickerStartX;
+        hoveredPuzzle = Math.floor((event.offsetX + pickerScrollDelta) / pickerSingleWidth);
+        pickerActive = true;
         event.preventDefault();
     }
-    function scrollRelease(event) {
-        if (scrollActive && hoveredPuzzle !== null) {
+
+    function pickerRelease(event) {
+        if (pickerActive && hoveredPuzzle !== null) {
             image.src = puzzles[hoveredPuzzle].src;
             reset();
         }
-        scrollActive = false;
+        pickerActive = false;
         event.preventDefault();
     }
 
-    scrollerInit();
-    /*** end scroller ***/
+    /*** end picker ***/
 
     // support for iPhone
-    canvas.addEventListener("touchstart", touchStart, false);
-    canvas.addEventListener("touchmove", touchMove, true);
-    canvas.addEventListener("touchend", touchEnd, false);
 
-    function touchStart(e)
-    {
+    function touchStart(e) {
         touchMove(e);
         mouseClick(e);
     }
-    function touchMove(e)
-    {
+
+    function touchMove(e) {
         if (!e) var e = event;
         e.preventDefault();
         mouseX = e.touches[0].pageX - canvas.offsetLeft - topContainer.offsetLeft;
         mouseY = e.touches[0].pageY - canvas.offsetTop - topContainer.offsetTop;
     }
-    function touchEnd(e)
-    {
+
+    function touchEnd(e) {
         mouseRelease(e);
     }
 
-    pickerCanvas.addEventListener("touchstart", scrollTouchStart, false);
-    pickerCanvas.addEventListener("touchmove", scrollTouchMove, true);
-    pickerCanvas.addEventListener("touchend", scrollTouchEnd, false);
-
-    var lastScrollTouchX;
-    function scrollTouchStart(e)
-    {
+    function pickerTouchStart(e) {
         e.pageX = e.touches[0].pageX;
         e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
-        scrollClick(e);
-        lastScrollTouchX = e.pageX;
-    }
-    function scrollTouchMove(e)
-    {
-        e.pageX = e.touches[0].pageX;
-        e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
-        scrollMove(e);
-        lastScrollTouchX = e.pageX;
-        e.preventDefault()
-    }
-    function scrollTouchEnd(e)
-    {
-        scrollRelease(e);
+        pickerClick(e);
     }
 
-    if (window.navigator.standalone)
-    {
-        document.ontouchmove = function(e) {e.preventDefault()}; // disable scroll in app mode
+    function pickerTouchMove(e) {
+        e.pageX = e.touches[0].pageX;
+        e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
+        pickerMove(e);
+    }
+
+    function pickerTouchEnd(e) {
+        pickerRelease(e);
     }
 
     // orientation
-    function setRotation(isRotated)
-    {
+    function setRotation(isRotated) {
         topContainer.style.transform = isRotated ? "rotate(90deg)" : "";
         topContainer.style.transformOrigin = "0px 0px";
         topContainer.style.webkitTransformOrigin = "0px 0px";
@@ -440,36 +424,70 @@
         topContainer.style.marginLeft = isRotated ? "400px" : "-640px";
         topContainer.style.marginTop = isRotated ? "-640px" : "-400px";
     }
+
     function readDeviceOrientation() {
         if (Math.abs(window.orientation) === 0) {
             setRotation(true);
         } else {
             setRotation(false);
-        }}
-    window.onorientationchange = readDeviceOrientation;
-    readDeviceOrientation();
-
-    // scale to fit phone's dimensions
-    var viewportmeta = document.querySelector('meta[name="viewport"]');
-    if (viewportmeta) {
-        scale = screen.availWidth / topContainer.scrollHeight;
-        viewportmeta.content = 'user-scalable=no, width=device-width, height=device-height, ' +
-                               'minimum-scale=' + scale + ', ' +
-                               'maximum-scale=' + scale + ', ' +
-                               'initial-scale=' + scale;
+        }
     }
 
-    // lock scroll in non-app mode
-    function lockScroll(id) {
-        document.getElementById(id).ontouchmove = function(e){ e.preventDefault(); }
+    function initPhoneHandlers() {
+        pickerCanvas.addEventListener("touchstart", pickerTouchStart, false);
+        pickerCanvas.addEventListener("touchmove", pickerTouchMove, true);
+        pickerCanvas.addEventListener("touchend", pickerTouchEnd, false);
+
+        window.addEventListener("orientationchange", readDeviceOrientation);
+        readDeviceOrientation();
+
+        canvas.addEventListener("touchstart", touchStart, false);
+        canvas.addEventListener("touchmove", touchMove, true);
+        canvas.addEventListener("touchend", touchEnd, false);
     }
-    lockScroll("bg");
-    lockScroll("easy-button");
-    lockScroll("hard-button");
-    lockScroll("insane-button");
-    lockScroll("play-button");
-    lockScroll("reset-button");
-    lockScroll("level-text");
+
+    function fixViewport() {
+        // scale to fit phone's dimensions
+        var viewportmeta = document.querySelector('meta[name="viewport"]');
+        if (viewportmeta) {
+            scale = screen.availWidth / topContainer.scrollHeight;
+            viewportmeta.content = 'user-scalable=no, width=device-width, height=device-height, ' +
+                                   'minimum-scale=' + scale + ', ' +
+                                   'maximum-scale=' + scale + ', ' +
+                                   'initial-scale=' + scale;
+        }
+    }
+
+    function preventDefault(e) {
+        e.preventDefault()
+    }
+
+    function initScrollLocks() {
+        // disable scroll in app mode
+        if (window.navigator.standalone) {
+            document.addEventListener("touchmove", preventDefault);
+        }
+
+        // lock scroll in non-app mode
+        function lockScroll(id) {
+            document.getElementById(id).addEventListener("touchmove", preventDefault);
+        }
+        lockScroll("bg");
+        lockScroll("easy-button");
+        lockScroll("hard-button");
+        lockScroll("insane-button");
+        lockScroll("play-button");
+        lockScroll("reset-button");
+        lockScroll("level-text");
+    }
+
+    initImage();
+    preloadImages();
+    initHandlers();
+    initPicker();
+    initPhoneHandlers();
+    fixViewport();
+    initScrollLocks();
 
 </script>
 </body>
