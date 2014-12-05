@@ -365,7 +365,7 @@
     function pickerClick(event) {
         pickerStartX = event.pageX;
         lastPickerX = pickerStartX;
-        hoveredPuzzle = Math.floor((event.offsetX + pickerScrollDelta) / pickerSingleWidth);
+        hoveredPuzzle = Math.floor((event.pageX - topContainer.offsetLeft + pickerScrollDelta) / pickerSingleWidth);
         pickerActive = true;
         event.preventDefault();
     }
@@ -401,13 +401,11 @@
 
     function pickerTouchStart(e) {
         e.pageX = e.touches[0].pageX;
-        e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
         pickerClick(e);
     }
 
     function pickerTouchMove(e) {
         e.pageX = e.touches[0].pageX;
-        e.offsetX = e.touches[0].pageX - topContainer.offsetLeft;
         pickerMove(e);
     }
 
