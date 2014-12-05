@@ -303,9 +303,9 @@
     /*** picker ***/
     var puzzles = new Array();
     var pickerActive = false;
-    var pickerStartX = 0;
+    var pickerStartPos = 0;
     var pickerScrollDelta = 0;
-    var lastPickerX = 0;
+    var lastPickerPos = 0;
     var hoveredPuzzle = null;
     var pickerWidth = topContainer.scrollWidth;
     var pickerHeight = pickerCanvas.height;
@@ -350,11 +350,12 @@
 
     function pickerMove(event) {
         if (pickerActive) {
-            pickerScrollDelta -= event.pageX - lastPickerX;
-            if (event.pageX - lastPickerX) {
+            var eventPos = isRotated ? event.pageY : event.pageX;
+            pickerScrollDelta -= eventPos - lastPickerPos;
+            if (eventPos - lastPickerPos) {
                 hoveredPuzzle = null;
             }
-            lastPickerX = event.pageX;
+            lastPickerPos = eventPos;
             maxAllowedDelta = puzzles.length * pickerSingleWidth - pickerWidth;
             pickerScrollDelta = mathClamp(0, pickerScrollDelta, maxAllowedDelta);
             drawPicker();
@@ -363,9 +364,11 @@
     }
 
     function pickerClick(event) {
-        pickerStartX = event.pageX;
-        lastPickerX = pickerStartX;
-        hoveredPuzzle = Math.floor((event.pageX - topContainer.offsetLeft + pickerScrollDelta) / pickerSingleWidth);
+        var eventPos = isRotated ? event.pageY : event.pageX;
+        var eventRelativePos = isRotated ? eventPos - topContainer.offsetTop : eventPos - topContainer.offsetLeft;
+        pickerStartPos = eventPos;
+        lastPickerPos = pickerStartPos;
+        hoveredPuzzle = Math.floor((eventRelativePos + pickerScrollDelta) / pickerSingleWidth);
         pickerActive = true;
         event.preventDefault();
     }
@@ -383,6 +386,8 @@
 
     // support for iPhone
 
+    var isRotated;
+
     function touchStart(e) {
         touchMove(e);
         mouseClick(e);
@@ -391,8 +396,13 @@
     function touchMove(e) {
         if (!e) var e = event;
         e.preventDefault();
-        mouseX = e.touches[0].pageX - canvas.offsetLeft - topContainer.offsetLeft;
-        mouseY = e.touches[0].pageY - canvas.offsetTop - topContainer.offsetTop;
+        if (!isRotated) {
+            mouseX = e.pageX - canvas.offsetLeft - topContainer.offsetLeft;
+            mouseY = e.pageY - canvas.offsetTop - topContainer.offsetTop;
+        } else {
+            mouseX = e.pageY - canvas.offsetLeft - topContainer.offsetTop;
+            mouseY = topContainer.offsetLeft - e.pageX - canvas.offsetTop;
+        }
     }
 
     function touchEnd(e) {
@@ -400,12 +410,10 @@
     }
 
     function pickerTouchStart(e) {
-        e.pageX = e.touches[0].pageX;
         pickerClick(e);
     }
 
     function pickerTouchMove(e) {
-        e.pageX = e.touches[0].pageX;
         pickerMove(e);
     }
 
@@ -414,7 +422,7 @@
     }
 
     // orientation
-    function setRotation(isRotated) {
+    function setRotation() {
         topContainer.style.transform = isRotated ? "rotate(90deg)" : "";
         topContainer.style.transformOrigin = "0px 0px";
         topContainer.style.webkitTransformOrigin = "0px 0px";
@@ -425,10 +433,11 @@
 
     function readDeviceOrientation() {
         if (Math.abs(window.orientation) === 0) {
-            setRotation(true);
+            isRotated = true;
         } else {
-            setRotation(false);
+            isRotated = false;
         }
+        setRotation();
     }
 
     function initPhoneHandlers() {
