@@ -409,18 +409,6 @@
         mouseRelease(e);
     }
 
-    function pickerTouchStart(e) {
-        pickerClick(e);
-    }
-
-    function pickerTouchMove(e) {
-        pickerMove(e);
-    }
-
-    function pickerTouchEnd(e) {
-        pickerRelease(e);
-    }
-
     // orientation
     function setRotation() {
         topContainer.style.transform = isRotated ? "rotate(90deg)" : "";
@@ -441,9 +429,9 @@
     }
 
     function initPhoneHandlers() {
-        pickerCanvas.addEventListener("touchstart", pickerTouchStart, false);
-        pickerCanvas.addEventListener("touchmove", pickerTouchMove, true);
-        pickerCanvas.addEventListener("touchend", pickerTouchEnd, false);
+        pickerCanvas.addEventListener("touchstart", pickerClick, false);
+        pickerCanvas.addEventListener("touchmove", pickerMove, true);
+        pickerCanvas.addEventListener("touchend", pickerRelease, false);
 
         window.addEventListener("orientationchange", readDeviceOrientation);
         readDeviceOrientation();
